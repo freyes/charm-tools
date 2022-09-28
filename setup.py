@@ -61,6 +61,7 @@ setup(
         'secretstorage<3.4',
         'dict2colander==0.2',
         'vergit>=1.0.0,<2.0.0',
+        'poetry-core',
         'requirements-parser<0.6',
     ],
     include_package_data=True,
