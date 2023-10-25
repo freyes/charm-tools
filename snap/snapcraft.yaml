@@ -25,6 +25,27 @@ environment:
   PYTHONHOME: $SNAP
   PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3.10/site-packages:$SNAP/usr/lib/python3.10:$SNAP/usr/lib/python3.10/lib-dynload:$SNAP/usr/local/lib/python3.10/dist-packages
 parts:
+  charmstore-client:
+    build-attributes: ['no-patchelf']
+    source: https://github.com/juju/charmstore-client.git
+    source-branch: master
+    source-type: git
+    plugin: go
+    go-importpath: github.com/juju/charmstore-client
+    build-packages:
+      - bzr
+      - python3-pip
+    override-build: |
+      snapcraftctl build
+      pip3 install vergit
+      vergit --format=json > $SNAPCRAFT_PART_INSTALL/charmstore-client-version
+  bhttp:
+    plugin: godeps
+    build-attributes: ['no-patchelf']
+    source: https://github.com/rogpeppe/bhttp
+    source-branch: master
+    source-type: git
+    go-importpath: github.com/rogpeppe/bhttp
   charm-tools:
     source: .
     # the core22 python plugin does not work for classic snaps.
