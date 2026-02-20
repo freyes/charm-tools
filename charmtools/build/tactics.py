@@ -1035,6 +1035,70 @@ class InstallerTactic(Tactic):
         return sigs
 
 
+class WheelhouseConstraintsTactic(ExactMatch, Tactic):
+    """
+    Tactic to process the ``wheelhouse-constraints.txt`` file and build a
+    constraints file for building wheels in the charm's ``wheelhouse/``
+    directory.
+    """
+    kind = "dynamic"
+    FILENAME = 'wheelhouse-constraints.txt'
+    per_layer = False
+    binary_build = False
+    binary_build_from_source = False
+    use_python_from_snap = False
+    upgrade_deps = False
+    ignore_requires_python = False
+
+    def __init__(self, charm, *args, **kwargs):
+        super(WheelhouseConstraintsTactic, self).__init__(
+            charm / self.FILENAME, *args, **kwargs)
+        self.tracked = []
+        self.previous = []
+        self.lines = None
+        self._venv = None
+        self.purge_wheels = False
+        self._layer_refs = {}
+        self.modules = {}
+        self.lock_info = []
+
+    def __str__(self):
+        directory = self.target.directory / 'wheelhouse'
+        return "Building constraints file in {}".format(directory)
+
+    @property
+    def target_file(self):
+        ""  # suppress inherited doc
+        target = self.target.directory / self.FILENAME
+        return target
+
+    def __call__(self):
+        log.debug("Processing constraints file:")
+        self.read()
+        if self.lines:
+            log.debug('  ' + line.strip())
+
+        self.target_file.write_text('\n'.join(self.lines))
+
+    def read(self):
+        if self.lines is None:
+            src = path(self.entity)
+            if src.exists():
+                for req in requirements.parse(src.text()):
+                    if req.name is None:
+                        raise BuildError(
+                            'Unable to determine package name for "{}"; '
+                            'did you forget "#egg=..."?'
+                            .format(req.line.strip()))
+                    self._layer_refs[safe_name(req.name)] = self.layer.url
+                self.lines = (['# ' + self.layer.url] +
+                              src.lines(retain=False) +
+                              [''])
+            else:
+                self.lines = []
+
+
+
 class WheelhouseTactic(ExactMatch, Tactic):
     """
     Tactic to process the ``wheelhouse.txt`` file and build a source-only
@@ -1518,6 +1582,7 @@ DEFAULT_TACTICS = [
     IgnoreTactic,
     ExcludeTactic,
     ManifestTactic,
+    WheelhouseConstraintsTactic,
     WheelhouseTactic,
     InstallerTactic,
     CopyrightTactic,
