@@ -1216,9 +1216,9 @@ class WheelhouseTactic(ExactMatch, Tactic):
             _no_binary_opts = ('--no-binary', ':all:')
             _ignore_requires_python = ('--ignore-requires-python', )
             try:
+                env = self._get_env()
                 if self.binary_build_from_source or self.binary_build:
                     # Handle constraints
-                    env = self._get_env()
                     if constraints:
                         env['PIP_CONSTRAINT'] = constraints
                         env['PIP_BUILD_CONSTRAINT'] = constraints
